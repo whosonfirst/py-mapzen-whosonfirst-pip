@@ -17,7 +17,7 @@ class server:
         url = self.scheme + "://" + self.hostname
 
         if self.port:
-            url = url + ":%s" % self.port
+            url = url + ":%s/" % self.port
 
         params = { "latitude": lat, "longitude": lon }
         

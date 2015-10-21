@@ -7,7 +7,7 @@ desc = open("README.md").read(),
 setup(
     name='mapzen.whosonfirst.pip',
     namespace_packages=['mapzen', 'mapzen.whosonfirst', 'mapzen.whosonfirst.pip'],
-    version='0.1',
+    version='0.2',
     description='Simple Python wrapper for talking to the go-whosonfirst-pip server',
     author='Mapzen',
     url='https://github.com/mapzen/py-mapzen-whosonfirst-pip',
@@ -19,5 +19,5 @@ setup(
     packages=packages,
     scripts=[
         ],
-    download_url='https://github.com/mapzen/py-mapzen-whosonfirst-pip/releases/tag/v0.1',
+    download_url='https://github.com/mapzen/py-mapzen-whosonfirst-pip/releases/tag/v0.2',
     license='BSD')
