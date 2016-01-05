@@ -18,6 +18,8 @@ class base:
 
         return data
 
+# https://github.com/whosonfirst/go-whosonfirst-pip#wof-pip-server
+
 class server(base):
 
     def __init__(self, **kwargs):
@@ -34,6 +36,8 @@ class server(base):
             url = url + ":%s/" % self.port
 
         return self.point_in_poly(url, lat, lon,placetype)
+
+# https://github.com/whosonfirst/go-whosonfirst-pip#wof-pip-proxy
 
 class proxy(base):
 

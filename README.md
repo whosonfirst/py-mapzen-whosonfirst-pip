@@ -11,6 +11,6 @@ own.
 
 ## See also
 
-* https://github.com/whosonfirst/go-whosonfirst-pip
-
+* https://github.com/whosonfirst/go-whosonfirst-pip#wof-pip-server
+* https://github.com/whosonfirst/go-whosonfirst-pip#wof-pip-proxy
 
