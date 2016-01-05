@@ -4,7 +4,21 @@ __import__('pkg_resources').declare_namespace(__name__)
 import requests
 import json
 
-class server:
+class base:
+
+    def point_in_poly(self, endpoint, lat, lon, placetype=None):
+
+        params = { "latitude": lat, "longitude": lon }
+        
+        if placetype:
+            params[ "placetype" ] = placetype
+
+        rsp = requests.get(endpoint, params=params)
+        data = json.loads(rsp.content)
+
+        return data
+
+class server(base):
 
     def __init__(self, **kwargs):
 
@@ -19,20 +33,32 @@ class server:
         if self.port:
             url = url + ":%s/" % self.port
 
-        params = { "latitude": lat, "longitude": lon }
-        
-        if placetype:
-            params[ "placetype" ] = placetype
+        return self.point_in_poly(url, lat, lon,placetype)
 
-        rsp = requests.get(url, params=params)
-        data = json.loads(rsp.content)
+class proxy(base):
 
-        return data
+    def __init__(self, **kwargs):
+
+        self.scheme = kwargs.get('scheme', 'http')
+        self.hostname = kwargs.get('hostname', 'localhost')
+        self.port = kwargs.get('port', 1111)
+
+    def reverse_geocode(self, target, lat, lon, placetype=None):
+
+        url = self.scheme + "://" + self.hostname
+
+        if self.port:
+            url = url + ":%s/" % self.port
+
+        url = url + target
+
+        return self.point_in_poly(url, lat, lon,placetype)
 
 if __name__ == '__main__':
 
-    s = server()
-    r = s.reverse_geocode(40.677524,-73.987343)
-    
-    print r
-    
+    for t in ('locality', 'neighbourhood'):
+
+        p = proxy()
+        r = p.reverse_geocode(t, 40.677524,-73.987343)
+        
+        print "%s %s" % (t, r)    
