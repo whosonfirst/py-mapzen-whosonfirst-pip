@@ -6,9 +6,13 @@ import logging
 def reverse_geocoordinates(feature):
 
     props = feature['properties']
-
-    lat = props.get('lbl:latitude', None)
-    lon = props.get('lbl:longitude', None)
+    
+    lat = props.get('reversegeo:latitude', None)
+    lon = props.get('reversegeo:longitude', None)
+    
+    if not lat or not lon:
+        lat = props.get('lbl:latitude', None)
+        lon = props.get('lbl:longitude', None)
     
     if not lat or not lon:
         lat = props.get('geom:latitude', None)
