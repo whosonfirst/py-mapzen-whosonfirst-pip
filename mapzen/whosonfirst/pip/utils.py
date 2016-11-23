@@ -7,8 +7,8 @@ def reverse_geocoordinates(feature):
 
     props = feature['properties']
     
-    lat = props.get('geom:reversegeo_lat', None)
-    lon = props.get('geom:reversegeo_long', None)
+    lat = props.get('reversegeo:latitude', None)
+    lon = props.get('reversegeo:longitude', None)
     
     if not lat or not lon:
         lat = props.get('lbl:latitude', None)
