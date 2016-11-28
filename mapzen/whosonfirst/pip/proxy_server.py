@@ -1,6 +1,3 @@
-# https://pythonhosted.org/setuptools/setuptools.html#namespace-packages
-__import__('pkg_resources').declare_namespace(__name__)
-
 import os
 import logging
 import json
@@ -10,13 +7,13 @@ import signal
 import requests
 import time
 
-class base:
+class proxy_base:
 
     def __init__(self, cfg, **kwargs):
 
         fh = open(cfg, 'r')
         data = json.load(fh)
-        
+
         proxy_config = {}
 
         for cfg in data:
@@ -26,7 +23,7 @@ class base:
         self.cfg = cfg
         self.proxy_config = proxy_config
 
-class proxy_server(base):
+class proxy_server(proxy_base):
 
     # PLEASE WRITE ME
 
@@ -35,17 +32,17 @@ class proxy_server(base):
         """
         cmd = [ proxy_server, "-host", options.proxy_host, "-port", options.proxy_port, "-config", options.proxy_config ]
         logging.debug(cmd)
-        
+
         proc = subprocess.Popen(cmd)
         """
 
         return False
 
-class pip_servers(base):
+class proxy_servers(proxy_base):
 
     def __init__(self, cfg, **kwargs):
 
-        base.__init__(self, cfg, **kwargs)
+        proxy_base.__init__(self, cfg, **kwargs)
 
         self.pid_root = kwargs.get("pid_root", tempfile.gettempdir())
 
@@ -73,7 +70,7 @@ class pip_servers(base):
         pid_fh.close()
 
         return pid
-        
+
     def is_server_running(self, placetype):
 
         pid = self.get_pid(placetype)
@@ -82,7 +79,7 @@ class pip_servers(base):
             return False
 
         # ps h -p ${PID} | wc -l
-        
+
         cmd = [ "ps", "h", "-p", pid ]
         cmd = map(str, cmd)
 
