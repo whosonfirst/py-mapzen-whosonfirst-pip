@@ -6,23 +6,23 @@ import logging
 def reverse_geocoordinates(feature):
 
     props = feature['properties']
-    
+
     lat = props.get('reversegeo:latitude', None)
     lon = props.get('reversegeo:longitude', None)
-    
+
     if not lat or not lon:
         lat = props.get('lbl:latitude', None)
         lon = props.get('lbl:longitude', None)
-    
+
     if not lat or not lon:
         lat = props.get('geom:latitude', None)
         lon = props.get('geom:longitude', None)
-        
+
     if not lat or not lon:
 
         shp = shapely.geometry.asShape(feature['geometry'])
         coords = shp.centroid
-        
+
         lat = coords.y
         lon = coords.x
 
@@ -45,30 +45,37 @@ def append_hierarchy_and_parent(feature, **kwargs):
     placetype = props['wof:placetype']
 
     lat, lon = reverse_geocoordinates(feature)
- 
+
     # see also : https://github.com/whosonfirst/go-whosonfirst-pip#wof-pip-server
-    pip = mapzen.whosonfirst.pip.proxy()
+
+    # if a user-specified pip_server is passed, use that; otherwise use pip_proxy
+    pip_server = kwargs.get('pip_server', None)
+    if not pip_server:
+        pip_proxy = mapzen.whosonfirst.pip.proxy()
 
     pt = mapzen.whosonfirst.placetypes.placetype(placetype)
-    
+
     _hiers = []
     _rsp = []
-    
+
     parents = pt.parents()
 
     logging.debug("feature is a %s, parents are %s" % (placetype, parents))
 
     for parent in parents:
-        
+
         parent = str(parent)
 
         # TO DO: some kind of 'ping' to make sure the server is actually
         # there... (20151221/thisisaaronland)
-        
+
         logging.debug("reverse geocode for %s w/ %s,%s" % (parent, lat, lon))
 
         try:
-            rsp = pip.reverse_geocode(parent, lat, lon, exclude=["superseded", "deprecated"])
+            if pip_server:
+                rsp = pip_server.reverse_geocode(lat, lon, exclude=["superseded", "deprecated"])
+            else:
+                rsp = pip_proxy.reverse_geocode(parent, lat, lon, exclude=["superseded", "deprecated"])
         except Exception, e:
             logging.debug("failed to reverse geocode %s @%s,%s" % (parent, lat, lon))
             continue
@@ -80,9 +87,9 @@ def append_hierarchy_and_parent(feature, **kwargs):
     wofid = props.get('wof:id', None)
 
     data_root = kwargs.get('data_root', '')
-    
+
     for r in _rsp:
-        
+
         id = r['Id']
 
         pf = mapzen.whosonfirst.utils.load(data_root, id)
@@ -109,13 +116,13 @@ def append_hierarchy_and_parent(feature, **kwargs):
 
     if len(_rsp) == 0:
         logging.debug("Failed to reverse geocode any parents for %s, %s" % (lat, lon))
-    elif len(_rsp) > 1:  
+    elif len(_rsp) > 1:
         logging.debug("Multiple reverse geocoding possibilities %s, %s" % (lat, lon))
     else:
         parent_id = _rsp[0]['Id']
 
     props['wof:parent_id'] = parent_id
-    
+
     props['wof:hierarchy'] = _hiers
     feature['properties'] = props
 
