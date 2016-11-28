@@ -1,3 +1,5 @@
+__import__('pkg_resources').declare_namespace(__name__)
+
 import mapzen.whosonfirst.pip
 import mapzen.whosonfirst.placetypes
 import shapely.geometry
@@ -46,43 +48,7 @@ def append_hierarchy_and_parent(feature, **kwargs):
 
     lat, lon = reverse_geocoordinates(feature)
 
-    # see also : https://github.com/whosonfirst/go-whosonfirst-pip#wof-pip-server
-
-    # if a user-specified pip_server is passed, use that; otherwise use pip_proxy
-    pip_server = kwargs.get('pip_server', None)
-    if not pip_server:
-        pip_proxy = mapzen.whosonfirst.pip.proxy()
-
-    pt = mapzen.whosonfirst.placetypes.placetype(placetype)
-
-    _hiers = []
-    _rsp = []
-
-    parents = pt.parents()
-
-    logging.debug("feature is a %s, parents are %s" % (placetype, parents))
-
-    for parent in parents:
-
-        parent = str(parent)
-
-        # TO DO: some kind of 'ping' to make sure the server is actually
-        # there... (20151221/thisisaaronland)
-
-        logging.debug("reverse geocode for %s w/ %s,%s" % (parent, lat, lon))
-
-        try:
-            if pip_server:
-                rsp = pip_server.reverse_geocode(lat, lon, exclude=["superseded", "deprecated"])
-            else:
-                rsp = pip_proxy.reverse_geocode(parent, lat, lon, exclude=["superseded", "deprecated"])
-        except Exception, e:
-            logging.debug("failed to reverse geocode %s @%s,%s" % (parent, lat, lon))
-            continue
-
-        if len(rsp):
-            _rsp = rsp
-            break
+    _rsp = get_reverse_geocoded(lat, lon, placetype, kwargs)
 
     wofid = props.get('wof:id', None)
 
@@ -127,3 +93,43 @@ def append_hierarchy_and_parent(feature, **kwargs):
     feature['properties'] = props
 
     return True
+
+def get_reverse_geocoded(lat, lon, placetype, **kwargs):
+
+    # see also : https://github.com/whosonfirst/go-whosonfirst-pip#wof-pip-server
+
+    # if a user-specified pip_server is passed, use that; otherwise use pip_proxy
+    pip_server = kwargs.get('pip_server', None)
+    if not pip_server:
+        pip_proxy = mapzen.whosonfirst.pip.proxy()
+
+    pt = mapzen.whosonfirst.placetypes.placetype(placetype)
+
+    _hiers = []
+    _rsp = []
+
+    parents = pt.parents()
+
+    logging.debug("feature is a %s, parents are %s" % (placetype, parents))
+
+    for parent in parents:
+
+        parent = str(parent)
+
+        # TO DO: some kind of 'ping' to make sure the server is actually
+        # there... (20151221/thisisaaronland)
+
+        logging.debug("reverse geocode for %s w/ %s,%s" % (parent, lat, lon))
+
+        try:
+            if pip_server:
+                rsp = pip_server.reverse_geocode(lat, lon, exclude=["superseded", "deprecated"])
+            else:
+                rsp = pip_proxy.reverse_geocode(parent, lat, lon, exclude=["superseded", "deprecated"])
+        except Exception, e:
+            logging.debug("failed to reverse geocode %s @%s,%s" % (parent, lat, lon))
+            continue
+
+        if len(rsp):
+            _rsp = rsp
+            break
