@@ -1,9 +1,9 @@
-__import__('pkg_resources').declare_namespace(__name__)
-
 import mapzen.whosonfirst.pip
 import mapzen.whosonfirst.placetypes
 import shapely.geometry
 import logging
+import requests
+import json
 
 def reverse_geocoordinates(feature):
 
@@ -45,20 +45,41 @@ def append_hierarchy_and_parent(feature, **kwargs):
 
     props = feature['properties']
     placetype = props['wof:placetype']
+    wofid = props.get('wof:id', None)
 
     lat, lon = reverse_geocoordinates(feature)
 
-    _rsp = get_reverse_geocoded(lat, lon, placetype, kwargs)
+    parents = get_reverse_geocoded(lat, lon, placetype, **kwargs)
+    hierarchy = get_hierarchy(parents, wofid, placetype, **kwargs)
+    parent_id = get_parent_id(parents)
 
-    wofid = props.get('wof:id', None)
+    if len(parents) == 0:
+        logging.debug("Failed to reverse geocode any parents for %s, %s" % (lat, lon))
+    elif len(parents) > 1:
+        logging.debug("Multiple reverse geocoding possibilities %s, %s" % (lat, lon))
+
+    props['wof:parent_id'] = parent_id
+    props['wof:hierarchy'] = hierarchy
+    feature['properties'] = props
+
+    return True
+
+def get_hierarchy(reverse_geocoded, wofid, placetype, **kwargs):
+
+    _hiers = []
 
     data_root = kwargs.get('data_root', '')
+    remote_data_root = kwargs.get('remote_data_root', 'https://whosonfirst.mapzen.com/data/')
 
-    for r in _rsp:
+    for r in reverse_geocoded:
 
         id = r['Id']
 
-        pf = mapzen.whosonfirst.utils.load(data_root, id)
+        if data_root:
+            pf = mapzen.whosonfirst.utils.load(data_root, id)
+        else:
+            rsp = requests.get(remote_data_root + mapzen.whosonfirst.utils.id2relpath(id))
+            pf = json.loads(rsp.content)
 
         pp = pf['properties']
         ph = pp['wof:hierarchy']
@@ -78,21 +99,16 @@ def append_hierarchy_and_parent(feature, **kwargs):
 
             _hiers.append(h)
 
+    return _hiers
+
+def get_parent_id(reverse_geocoded):
+
     parent_id = -1
 
-    if len(_rsp) == 0:
-        logging.debug("Failed to reverse geocode any parents for %s, %s" % (lat, lon))
-    elif len(_rsp) > 1:
-        logging.debug("Multiple reverse geocoding possibilities %s, %s" % (lat, lon))
-    else:
-        parent_id = _rsp[0]['Id']
+    if len(reverse_geocoded) == 1:
+        parent_id = reverse_geocoded[0]['Id']
 
-    props['wof:parent_id'] = parent_id
-
-    props['wof:hierarchy'] = _hiers
-    feature['properties'] = props
-
-    return True
+    return parent_id
 
 def get_reverse_geocoded(lat, lon, placetype, **kwargs):
 
@@ -105,7 +121,6 @@ def get_reverse_geocoded(lat, lon, placetype, **kwargs):
 
     pt = mapzen.whosonfirst.placetypes.placetype(placetype)
 
-    _hiers = []
     _rsp = []
 
     parents = pt.parents()
@@ -123,7 +138,7 @@ def get_reverse_geocoded(lat, lon, placetype, **kwargs):
 
         try:
             if pip_server:
-                rsp = pip_server.reverse_geocode(lat, lon, exclude=["superseded", "deprecated"])
+                rsp = pip_server.reverse_geocode(lat, lon, placetype=parent, exclude=["superseded", "deprecated"])
             else:
                 rsp = pip_proxy.reverse_geocode(parent, lat, lon, exclude=["superseded", "deprecated"])
         except Exception, e:
@@ -133,3 +148,5 @@ def get_reverse_geocoded(lat, lon, placetype, **kwargs):
         if len(rsp):
             _rsp = rsp
             break
+
+    return _rsp
