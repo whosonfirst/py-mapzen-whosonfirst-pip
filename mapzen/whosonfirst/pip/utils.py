@@ -1,4 +1,5 @@
 import mapzen.whosonfirst.pip
+import mapzen.whosonfirst.uri
 import mapzen.whosonfirst.placetypes
 import shapely.geometry
 import logging
@@ -78,7 +79,7 @@ def get_hierarchy(reverse_geocoded, wofid, placetype, **kwargs):
         if data_root:
             pf = mapzen.whosonfirst.utils.load(data_root, id)
         else:
-            rsp = requests.get(remote_data_root + mapzen.whosonfirst.utils.id2relpath(id))
+            rsp = requests.get(remote_data_root + mapzen.whosonfirst.uri.id2relpath(id))
             pf = json.loads(rsp.content)
 
         pp = pf['properties']
