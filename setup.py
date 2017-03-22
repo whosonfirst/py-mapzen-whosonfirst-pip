@@ -24,11 +24,6 @@ setup(
     description='Simple Python wrapper for talking to the go-whosonfirst-pip server',
     author='Mapzen',
     url='https://github.com/whosonfirst/py-mapzen-whosonfirst-pip',
-    install_requires=[
-        'requests',
-        ],
-    dependency_links=[
-        ],
     packages=packages,
     scripts=[
         ],
