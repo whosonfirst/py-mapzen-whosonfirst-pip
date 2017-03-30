@@ -69,14 +69,14 @@ def get_hierarchy(reverse_geocoded, wofid, placetype, **kwargs):
 
     _hiers = []
 
-    data_root = kwargs.get('data_root', '')
+    data_root = kwargs.get('data_root', None)
     remote_data_root = kwargs.get('remote_data_root', 'https://whosonfirst.mapzen.com/data/')
 
     for r in reverse_geocoded:
 
         id = r['Id']
 
-        if data_root:
+        if data_root != None:
             pf = mapzen.whosonfirst.utils.load(data_root, id)
         else:
             rsp = requests.get(remote_data_root + mapzen.whosonfirst.uri.id2relpath(id))
@@ -117,6 +117,7 @@ def get_reverse_geocoded(lat, lon, placetype, **kwargs):
 
     # if a user-specified pip_server is passed, use that; otherwise use pip_proxy
     pip_server = kwargs.get('pip_server', None)
+
     if not pip_server:
         pip_proxy = mapzen.whosonfirst.pip.proxy()
 
