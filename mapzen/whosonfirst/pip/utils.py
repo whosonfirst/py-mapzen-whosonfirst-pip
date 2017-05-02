@@ -8,6 +8,8 @@ import json
 
 def reverse_geocoordinates(feature):
 
+    logging.warning("mapzen.whosonfirst.pip.utils.reverse_geocoordinates has been deprecated, you should use mapzen.whosonfirst.utils.reverse_geocoordinates instead")
+
     props = feature['properties']
 
     lat = props.get('reversegeo:latitude', None)
